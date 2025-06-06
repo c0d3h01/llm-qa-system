@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    services:
+      docker:
+        image: docker:24.0.7
+        options: --privileged
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Build FAISS index for test
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r ml-inference/requirements.txt
+          mkdir -p data/raw
+          echo "Test documentation snippet for indexing." > data/raw/test.txt
+          python scripts/build_index.py
+
+      - name: Build and run Docker Compose
+        run: |
+          docker compose up --build -d
+          sleep 25  # Wait for containers to be ready
+
+      - name: Test Rust backend API /status
+        run: |
+          curl --fail http://localhost:8080/api/status
+
+      - name: Test Rust backend API /query
+        run: |
+          curl --fail -X POST http://localhost:8080/api/query \
+            -H "Content-Type: application/json" \
+            -d '{"question": "What is in the test documentation?"}'
+
+      - name: Tear down Docker Compose
+        if: always()
+        run: docker compose down
