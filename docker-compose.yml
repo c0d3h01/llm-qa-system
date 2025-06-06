@@ -1,0 +1,21 @@
+version: "3.8"
+
+services:
+  rust-backend:
+    build: ./rust-backend
+    ports:
+      - "8080:8080"
+    depends_on:
+      - ml-inference
+    environment:
+      - ML_INFERENCE_URL=http://ml-inference:8000
+      - VECTOR_DB_PATH=/data/faiss.index
+    volumes:
+      - ./data:/data
+
+  ml-inference:
+    build: ./ml-inference
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/data
