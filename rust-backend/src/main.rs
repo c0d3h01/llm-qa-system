@@ -23,16 +23,22 @@ async fn api_query(
 ) -> impl Responder {
     let client = &data.http;
     let ml_url = format!("{}/inference", data.ml_inference_url);
-    let ml_resp: QueryResponse = client.post(&ml_url)
-        .json(&*payload)
-        .send().await
-        .ok()
-        .and_then(|resp| resp.json().await.ok())
-        .unwrap_or(QueryResponse{
+let ml_resp: QueryResponse = match client.post(&ml_url)
+    .json(&*payload)
+    .send().await
+{
+    Ok(resp) => match resp.json::<QueryResponse>().await {
+        Ok(val) => val,
+        Err(_) => QueryResponse {
             answer: "ML inference failed".into(),
-            sources: vec![]
-        });
-    HttpResponse::Ok().json(ml_resp)
+            sources: vec![],
+        }
+    },
+    Err(_) => QueryResponse {
+        answer: "ML inference failed".into(),
+        sources: vec![],
+    }
+};    HttpResponse::Ok().json(ml_resp)
 }
 
 struct AppState {
