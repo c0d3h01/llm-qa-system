@@ -2,7 +2,7 @@ use actix_web::{web, App, HttpServer, Responder, HttpResponse};
 use serde::{Deserialize, Serialize};
 use reqwest::Client;
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize)]
 struct QueryPayload {
     question: String,
 }
