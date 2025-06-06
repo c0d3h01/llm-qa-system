@@ -7,7 +7,7 @@ struct QueryPayload {
     question: String,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 struct QueryResponse {
     answer: String,
     sources: Vec<String>,
